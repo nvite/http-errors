@@ -54,7 +54,7 @@ function updateConfigParams() {
 //
 // Optionally initialize our module with a custom logger and config.
 //
-module.exports = function (configObj, logger) {
+exports.init = function (configObj, logger) {
   if (configObj) {
     if (configObj.hasOwnProperty('stores')) {
       hasConfigStores = true;
