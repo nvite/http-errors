@@ -1,0 +1,22 @@
+{
+  "name": "nvite-http-errors",
+  "version": "1.0.0",
+  "description": "An express middleware for returning error statuses via exceptions.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nvite/http-errors.git"
+  },
+  "authors": [
+    "Dan Drinkard <dan@nvite.com>",
+    "Evan Dudla <evan@nvite.com>"
+  ],
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nvite/http-errors/issues"
+  },
+  "homepage": "https://github.com/nvite/http-errors"
+}
