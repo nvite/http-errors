@@ -29,8 +29,7 @@ var hasConfigStores = false;  // Support both nconf-style configs as well as JSO
 
 var fs = require('fs');
 var http = require('http');
-var util = require('util');
-var log = util.log;
+var log = console;
 
 var FILTERED_PARAMS = ['password', 'tax_id'];
 var REDACTED_PARAMS = ['token'];
@@ -100,9 +99,17 @@ var HttpError = function (message, options) {
     delete options.code;
   }
 
+  // accept a template path via options
+  if (options.template) {
+    this.template = options.template;
+    delete options.template;
+  }
+
   // set the rest of our properties
   /** @member {String} */
-  this.message = message || this.defaultMessage || "An unexpected error occurred";
+  this.logLevel || (this.logLevel = 'warn');
+  /** @member {String} */
+  this.message = message || this.defaultMessage || 'An unexpected error occurred';
   /** @member {Mixed} */
   this.context = options;
   /** @member {Date} */
@@ -114,7 +121,7 @@ var HttpError = function (message, options) {
  * @return {String} A String suitable for logs or a plaintext response
  */
 HttpError.prototype.toString = function () {
-  return "[" + this.status + "] " + this.message;
+  return '[' + this.status + '] ' + this.message;
 };
 
 /**
@@ -133,14 +140,16 @@ exports.HttpError = HttpError;
  */
 var HttpRedirect = function(location, options) {
   this.status = 302;
+  this.logLevel = 'info';
+  this.location = location;
   if (options && options.permanent) {
     this.status = 301;
   }
-  this.defaultMessage = "Redirecting you to " + location;
+  this.defaultMessage = 'Redirecting you to ' + location;
   this.headers = {
     'Location': this.location
   };
-  HttpError.call(this, this.message, options);
+  HttpError.call(this, this.defaultMessage, options);
 };
 HttpRedirect.prototype = new HttpError();
 exports.HttpRedirect = HttpRedirect;
@@ -152,7 +161,7 @@ exports.HttpRedirect = HttpRedirect;
  */
 var HttpBadRequest = function (message, options) {
   this.status = 400;
-  this.defaultMessage = "The server was unable to understand your request.";
+  this.defaultMessage = 'The server was unable to understand your request.';
   HttpError.call(this, message, options);
 };
 HttpBadRequest.prototype = new HttpError();
@@ -170,7 +179,7 @@ var HttpUnauthorized = function (message, options) {
   this.headers = {
     'WWW-Authenticate': 'Basic realm="Login Required"'
   };
-  this.defaultMessage = "You must be logged in as an authorized user to access this endpoint.";
+  this.defaultMessage = 'You must be logged in as an authorized user to access this endpoint.';
   HttpError.call(this, message, options);
 };
 HttpUnauthorized.prototype = new HttpError();
@@ -183,7 +192,7 @@ exports.HttpUnauthorized = HttpUnauthorized;
  */
 var HttpPaymentRequired = function (message, options) {
   this.status = 402;
-  this.defaultMessage = "An authorized payment is required to use this endpoint.";
+  this.defaultMessage = 'An authorized payment is required to use this endpoint.';
   HttpError.call(this, message, options);
 };
 HttpPaymentRequired.prototype = new HttpError();
@@ -196,8 +205,7 @@ exports.HttpPaymentRequired = HttpPaymentRequired;
  */
 var HttpForbidden = function  (message, options) {
   this.status = 403;
-  this.template = './public/access-forbidden.html';
-  this.defaultMessage = "You are not allowed to use this endpoint.";
+  this.defaultMessage = 'You are not allowed to use this endpoint.';
   HttpError.call(this, message, options);
 };
 HttpForbidden.prototype = new HttpError();
@@ -210,8 +218,7 @@ exports.HttpForbidden = HttpForbidden;
  */
 var HttpNotFound = function (message, options) {
   this.status = 404;
-  this.template = './public/not-found.html';
-  this.defaultMessage = "The resource you requested was not found.";
+  this.defaultMessage = 'The resource you requested was not found.';
   HttpError.call(this, message, options);
 };
 HttpNotFound.prototype = new HttpError();
@@ -224,7 +231,7 @@ exports.HttpNotFound = HttpNotFound;
  */
 var HttpRequestTimeout = function (message, options) {
   this.status = 408;
-  this.defaultMessage = "The request you made has timed out.";
+  this.defaultMessage = 'The request you made has timed out.';
   HttpError.call(this, message, options);
 };
 HttpRequestTimeout.prototype = new HttpError();
@@ -237,7 +244,7 @@ exports.HttpRequestTimeout = HttpRequestTimeout;
  */
 var HttpConflict = function (message, options) {
   this.status = 409;
-  this.defaultMessage = "The server was not able to fulfill your request with the data provided.";
+  this.defaultMessage = 'The server was not able to fulfill your request with the data provided.';
   HttpError.call(this, message, options);
 };
 HttpConflict.prototype = new HttpError();
@@ -250,6 +257,7 @@ exports.HttpConflict = HttpConflict;
  */
 var HttpInternalError = function (message, options) {
   this.status = 500;
+  this.logLevel = 'error';
   HttpError.call(this, message, options);
 };
 HttpInternalError.prototype = new HttpError();
@@ -314,7 +322,7 @@ var logError = function (err, req, res) {
   payload = JSON.parse(stringPayload);
 
   res.status(err.status);
-  log.error(err.toString(), payload);
+  log[err.logLevel](err.toString(), payload);
 };
 
 /**
@@ -376,10 +384,9 @@ var middleware = function (err, req, res, next) {
     }
     return renderResponse(err, req, res);
   }
-  // Otherwise, PANIC.
+  // Otherwise, Pass.
   else {
-    throw err;
+    return next(err, req, res);
   }
-  next();
 };
 exports.middleware = middleware;
