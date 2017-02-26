@@ -1,10 +1,13 @@
 {
-  "name": "nvite-http-errors",
+  "name": "@nvite/nvite-http-errors",
   "version": "1.0.0",
   "description": "An express middleware for returning error statuses via exceptions.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
   },
   "repository": {
     "type": "git",
